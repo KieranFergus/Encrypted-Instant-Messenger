@@ -41,6 +41,9 @@ def encrypt_data(data):
     return iv + length_enc + length_hmac + data_enc + data_hmac
 
 def decrypt_data(ciphertext):
+    if len(ciphertext) < 64:
+        sys.exit(1)
+
     iv = ciphertext[:16]
     ciphertext_length = ciphertext[16:32]
     received_length_hmac = ciphertext[32:64]
@@ -48,6 +51,7 @@ def decrypt_data(ciphertext):
     length_hmac = HMAC.new(hmac_key, iv + ciphertext_length, SHA256).digest()
     if received_length_hmac != length_hmac:
         sys.stdout.write("ERROR: HMAC verification failed")
+        sys.exit(1)
 
     cipher = AES.new(aes_key, AES.MODE_CBC, iv)
 
@@ -60,6 +64,7 @@ def decrypt_data(ciphertext):
     data_hmac = HMAC.new(hmac_key, data_ciph, SHA256).digest()
     if data_hmac != received_data_hmac:
         sys.stdout.write("ERROR: HMAC verification failed")
+        sys.exit(1)
 
     message = cipher.decrypt(data_ciph).rstrip(b'\x00')
     return message.decode()
@@ -73,13 +78,6 @@ def boot_server():
     server.bind(('', port)) 
     server.listen(5)
     conn, addr = server.accept()
-
-    # def end(signum, frame):
-    #     server.close()
-    #     sys.exit(0)
-
-    # signal.signal(signal.SIGINT, end)
-    # signal.signal(signal.SIGTERM, end)
 
     try:
         while True:
@@ -98,7 +96,7 @@ def boot_server():
                     sys.stdout.flush()
 
     except (EOFError, KeyboardInterrupt):
-        x = 2
+        incoming = ""
     finally:
         conn.close()
         server.close()
@@ -110,13 +108,6 @@ def boot_server():
 def boot_client():
     client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     client.connect((hostname, port))
-
-    # def end(signum, frame):
-    #     client.close()
-    #     sys.exit(0)
-
-    # signal.signal(signal.SIGINT, end)
-    # signal.signal(signal.SIGTERM, end)
 
     try:
         while True:
@@ -135,7 +126,7 @@ def boot_client():
                     sys.stdout.flush()
 
     except (EOFError, KeyboardInterrupt):
-        x = 2
+        incoming = ""
     finally:
         client.close()
         sys.exit(0)
