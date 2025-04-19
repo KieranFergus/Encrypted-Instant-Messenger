@@ -80,7 +80,7 @@ def boot_server():
     conn, addr = server.accept()
 
     try:
-        conn.send(encrypt_data("\n-- SESSION INITIATED --\n"))
+        sys.stdout.write("\n-- SESSION INITIATED --\n")
         while True:
             read, _, _ = select.select([conn, sys.stdin], [], [])
 
@@ -98,7 +98,6 @@ def boot_server():
 
     except (EOFError, KeyboardInterrupt):
         sys.stdout.write("\n-- END OF SESSION --\n\n")
-        conn.send(encrypt_data("-- END OF SESSION --\n"))
     finally:
         conn.close()
         server.close()
@@ -112,7 +111,7 @@ def boot_client():
     client.connect((hostname, port))
 
     try:
-        client.sendall(encrypt_data("\n-- SESSION INITIATED --\n"))
+        sys.stdout.write("\n-- SESSION INITIATED --\n")
         while True:
             read, _, _ = select.select([client, sys.stdin], [], [])
 
